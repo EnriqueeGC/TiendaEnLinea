@@ -1,11 +1,16 @@
 
 const db = require('../config/db');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
+const SECRET_KEY = 'holaMundo'
 
 async function registerUser(req, res) {
   const { Nombre, Direccion, CorreoElectronico, Telefono, NombreUsuario, Contraseña, RolID } = req.body;
 
   try {
-    // Aquí puedes agregar la lógica para validar los datos de entrada
+    // validar los datos de entrada
+    //const hashedPassword = await bcrypt.hash(Contraseña, 10);
 
     // Consulta para insertar un nuevo usuario en la base de datos
     const query = `INSERT INTO usuario (Nombre,Direccion,CorreoElectronico,Telefono,NombreUsuario,Contraseña,RolID) VALUES (:Nombre,:Direccion,:CorreoElectronico,:Telefono,:NombreUsuario,:Contraseña,:RolID)`;
@@ -82,10 +87,44 @@ async function getAllUsers(req, res) {
   }
 }
 
-module.exports = { 
-    registerUser,
-    getUserById,
-    getUserByUsername,
-    deleteUser,
-    getAllUsers 
+// Login
+async function loginUser(req, res) {
+  const { username, password } = req.body;
+  console.log(username, password);
+
+  try {
+    // Buscar el usuario por nombre de usuario
+    const query = `SELECT * FROM USUARIO WHERE nombreusuario = :nombreusuario`;
+    const result = await db.executeQuery(query, [username]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const user = result.rows[0];
+
+    // Comparar la contraseña proporcionada con la almacenada en la base de datos
+    // const passwordMatch = await bcrypt.compare(password, user.CONTRASEÑA);
+    
+    if (password !== user.CONTRASEÑA) {
+      return res.status(401).json({ message: 'Contraseña incorrecta' });
+    }
+
+    // Generar el token JWT
+    const token = jwt.sign({ userId: user.USUARIOID, username: user.NOMBREUSUARIO }, SECRET_KEY, { expiresIn: '1h' });
+
+    res.status(200).json({ message: 'Inicio de sesión exitoso', token });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al iniciar sesión' });
+  }
+}
+
+module.exports = {
+  registerUser,
+  getUserById,
+  getUserByUsername,
+  deleteUser,
+  getAllUsers,
+  loginUser
 };
+
