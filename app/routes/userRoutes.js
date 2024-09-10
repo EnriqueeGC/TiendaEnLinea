@@ -4,13 +4,15 @@ const {
     registerUser,
     getUserById,
     getUserByUsername,
-    deleteUser
+    deleteUser,
+    getAllUsers
 } = require('../controllers/userController');
 
 const router = express.Router();
 
 // Ruta para registrar un usuario
 router.post('/register', registerUser);
+router.get('/findAlls', getAllUsers);
 router.get('/findBy/:usuarioId', getUserById);
 router.get('/findByUsername/:username', getUserByUsername);
 router.delete('/deleteById/:usuarioId', deleteUser);
